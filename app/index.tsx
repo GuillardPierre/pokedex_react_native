@@ -1,27 +1,30 @@
-import { StyleSheet, Text, View } from "react-native";
-import { Link, useNavigation } from '@react-navigation/native';
-
+import { StyleSheet, Text, View } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import ThemedText from './components/ThemedText';
+import { useThemeColors } from './hooks/useThemeColors';
+import Card from './components/Card';
 
 export default function Index() {
-
-  // Permet de créer les styles de manières plus propre
-  const style = StyleSheet.create({
-    container: {
-      justifyContent: "center",
-      alignItems: "center",
-      marginTop: 50,
-    }
-  })
-
-  const navigation = useNavigation();
-
+  const colors = useThemeColors();
   return (
-      // View permet de créer un container un peu comme une div en HTML
-      <View
-        style={style.container}
-      >
-        <Text>Edit app/index.tsx to edit this screen </Text>
-        <Link href="/page2">About</Link>
-      </View>
+    <SafeAreaView
+      style={[
+        StyleSheet.absoluteFillObject,
+        { backgroundColor: colors.tint },
+        style.container,
+      ]}
+    >
+      <Card>
+        <ThemedText variant="headline" color="grayDark">
+          Pokedex
+        </ThemedText>
+      </Card>
+    </SafeAreaView>
   );
 }
+
+const style = StyleSheet.create({
+  container: {
+    flex: 1,
+  },
+});
