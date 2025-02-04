@@ -13,18 +13,34 @@ import Card from './components/Card';
 import PokemonCard from './components/pokemon/PokemonCard';
 import { useFetchQuery, useInfiniteFetchQuery } from './hooks/useFetchQuery';
 import { getPokemonId } from './functions/pokemon';
+import Searchbar from './components/SearchBar';
+import React from 'react';
+import Row from './components/row';
+import SortButton from './components/SortButton';
 
 export default function Index() {
+  const [search, setSearch] = React.useState('');
+  const [sortKey, setSortKey] = React.useState<'id' | 'name'>('id');
   const colors = useThemeColors();
   const { data, isFetching, fetchNextPage } =
     useInfiniteFetchQuery('/pokemon?limit=21');
-  console.log(data);
 
-  const pokemons = data?.pages.flatMap((page) => page.results) ?? [];
+  const pokemons =
+    data?.pages.flatMap((page) =>
+      page.results.map((r) => ({ name: r.name, id: getPokemonId(r.url) })),
+    ) ?? [];
+  const filtredPokemons = [
+    ...(search
+      ? pokemons.filter(
+          (p) =>
+            p.name.includes(search.toLowerCase()) || p.id.toString() === search,
+        )
+      : pokemons),
+  ].sort((a, b) => (a[sortKey] > b[sortKey] ? 1 : -1));
 
   return (
     <SafeAreaView style={[style.container, { backgroundColor: colors.tint }]}>
-      <View style={[style.header]}>
+      <Row style={[style.header]}>
         <Image
           source={require('@/assets/images/Pokeball.png')}
           width={24}
@@ -33,25 +49,25 @@ export default function Index() {
         <ThemedText variant="headline" color="grayWhite">
           Pokedex
         </ThemedText>
-      </View>
+      </Row>
+      <Row gap={16} style={style.form}>
+        <Searchbar value={search} onChange={setSearch} />
+        <SortButton value={sortKey} onChange={setSortKey} />
+      </Row>
       <Card style={style.body}>
         <FlatList
           style={[style.list]}
-          data={pokemons}
+          data={filtredPokemons}
           renderItem={({ item }) => (
-            <PokemonCard
-              id={getPokemonId(item.url)}
-              name={item.name}
-              style={style.card}
-            />
+            <PokemonCard id={item.id} name={item.name} style={style.card} />
           )}
-          keyExtractor={(item) => item.url}
+          keyExtractor={(item) => item.id.toString()}
           ListFooterComponent={
             isFetching ? (
               <ActivityIndicator color={colors.tint}></ActivityIndicator>
             ) : null
           }
-          onEndReached={() => fetchNextPage()}
+          onEndReached={search ? undefined : () => fetchNextPage()}
           numColumns={3}
           columnWrapperStyle={style.gridgap}
           contentContainerStyle={style.gridgap}
@@ -67,13 +83,14 @@ const style = StyleSheet.create({
     padding: 4,
   },
   header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
+    gap: 16,
     padding: 12,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
   },
   body: {
     flex: 1,
+    marginTop: 16,
   },
   gridgap: {
     gap: 8,
@@ -84,5 +101,8 @@ const style = StyleSheet.create({
   list: {
     paddingBlock: 24,
     paddingInline: 12,
+  },
+  form: {
+    paddingHorizontal: 12,
   },
 });
